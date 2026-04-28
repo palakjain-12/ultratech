@@ -103,6 +103,77 @@ const run = async () => {
     console.log("Seed completed:");
     console.log(`Users: ${users.length}, Equipments: ${equipments.length}, SpareParts: ${spares.length}`);
 
+    const maintenanceLogs = await MaintenanceLog.insertMany([
+      {
+        maintenanceId: "ML-001",
+        equipment: equipments[0]._id, // Primary Crusher
+        maintenanceType: "Preventive",
+        description: "Routine inspection and lubrication of crusher components.",
+        technicianName: users[1].name, // R. Kumar
+        dateOfService: new Date("2025-10-15"),
+        sparePartsUsed: [{ part: spares[3]._id, quantity: 5 }], // Industrial Grease
+        downtimeDuration: 4,
+        remarks: "All checks passed. Equipment in good condition."
+      },
+      {
+        maintenanceId: "ML-002",
+        equipment: equipments[1]._id, // Clinker Conveyor
+        maintenanceType: "Breakdown",
+        description: "Replaced worn conveyor belt section.",
+        technicianName: users[1].name, // R. Kumar
+        dateOfService: new Date("2025-11-20"),
+        sparePartsUsed: [{ part: spares[1]._id, quantity: 1 }], // Conveyor Belt
+        downtimeDuration: 8,
+        remarks: "Conveyor back in operation after belt replacement."
+      },
+      {
+        maintenanceId: "ML-003",
+        equipment: equipments[2]._id, // Packing Machine 3
+        maintenanceType: "Preventive",
+        description: "Calibration of packing machine sensors and nozzle cleaning.",
+        technicianName: users[1].name, // R. Kumar
+        dateOfService: new Date("2025-12-01"),
+        sparePartsUsed: [{ part: spares[2]._id, quantity: 2 }], // Packing Nozzle
+        downtimeDuration: 3,
+        remarks: "Machine operating within optimal parameters."
+      },
+      {
+        maintenanceId: "ML-004",
+        equipment: equipments[0]._id, // Primary Crusher
+        maintenanceType: "Breakdown",
+        description: "Bearing failure in primary crusher. Replaced bearing set.",
+        technicianName: users[1].name, // R. Kumar
+        dateOfService: new Date("2026-01-10"),
+        sparePartsUsed: [{ part: spares[0]._id, quantity: 1 }], // Crusher Bearing Set
+        downtimeDuration: 12,
+        remarks: "Crusher back online. Monitoring bearing temperature."
+      },
+      {
+        maintenanceId: "ML-005",
+        equipment: equipments[1]._id, // Clinker Conveyor
+        maintenanceType: "Preventive",
+        description: "Lubrication of conveyor rollers and tension adjustment.",
+        technicianName: users[1].name, // R. Kumar
+        dateOfService: new Date("2026-02-05"),
+        sparePartsUsed: [{ part: spares[3]._id, quantity: 3 }], // Industrial Grease
+        downtimeDuration: 2,
+        remarks: "Routine maintenance completed."
+      },
+      {
+        maintenanceId: "ML-006",
+        equipment: equipments[0]._id, // Primary Crusher
+        maintenanceType: "Preventive",
+        description: "Monthly inspection of crusher wear parts.",
+        technicianName: users[1].name, // R. Kumar
+        dateOfService: new Date("2026-02-20"),
+        sparePartsUsed: [],
+        downtimeDuration: 3,
+        remarks: "No significant wear detected."
+      }
+    ]);
+
+    console.log(`MaintenanceLogs: ${maintenanceLogs.length}`);
+
     await mongoose.connection.close();
     process.exit(0);
   } catch (err) {

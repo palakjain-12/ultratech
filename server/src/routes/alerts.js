@@ -16,8 +16,11 @@ router.get("/", authenticate, async (_req, res) => {
     ]);
     const today = new Date();
     const maintenanceDue = equipments.filter((eq) => {
-      if (!eq.lastMaintenanceDate) return true;
-      const nextDue = new Date(eq.lastMaintenanceDate);
+      // If no maintenance has ever been done, use installation date as the starting point
+      const baseDate = eq.lastMaintenanceDate || eq.installationDate;
+      if (!baseDate) return true; // Safety check
+
+      const nextDue = new Date(baseDate);
       nextDue.setDate(nextDue.getDate() + eq.serviceIntervalDays);
       return nextDue < today;
     });

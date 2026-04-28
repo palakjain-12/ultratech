@@ -3,7 +3,7 @@
 Proof-of-concept internal tool for maintenance and inventory tracking at UltraTech Cement – Hirmi Cement Works. Simulates a small module inside a large industrial ERP.
 
 ## Tech Stack
-- Frontend: React, Tailwind CSS, Axios, Recharts
+- Frontend: React (via CDN), Tailwind CSS, Axios, simplified visuals (lists/tables)
 - Backend: Node.js, Express.js
 - Database: MongoDB with Mongoose
 - Auth: JWT (role-based: Supervisor, Technician, Store Manager)
@@ -38,7 +38,7 @@ Proof-of-concept internal tool for maintenance and inventory tracking at UltraTe
 - Maintenance Logging: Create logs; updates equipment last maintenance date; consumes spares
 - Spare Parts Inventory: Add/update parts; reorder levels; stock management
 - Alerts: Low stock and maintenance due
-- Dashboard & Analytics: Summary cards, monthly activity chart, usage trends
+- Dashboard & Analytics: Summary cards, recent maintenance activities, low stock, maintenance due, equipment maintenance frequency (list), spare parts usage (list)
 
 ## API Endpoints
 - Auth:

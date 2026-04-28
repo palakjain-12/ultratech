@@ -29,8 +29,6 @@ router.post(
   authenticate,
   authorizeRoles("Technician", "Supervisor"),
   async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
     try {
       const {
         maintenanceId,
@@ -44,58 +42,55 @@ router.post(
         remarks
       } = req.body;
 
-      const equipment = await Equipment.findOne({ equipmentId }).session(session);
-      if (!equipment) {
-        await session.abortTransaction();
-        return res.status(400).json({ message: "Invalid Equipment ID" });
-      }
+      // Check for unique maintenanceId
+      const existingLog = await MaintenanceLog.findOne({ maintenanceId });
+      if (existingLog) return res.status(400).json({ message: `Maintenance ID ${maintenanceId} already exists.` });
 
+      // Validate equipment
+      const equipment = await Equipment.findOne({ equipmentId });
+      if (!equipment) return res.status(400).json({ message: `Invalid Equipment ID: ${equipmentId}` });
+
+      // Process spares and validate stock
       const sparesDocs = [];
       for (const item of sparesUsed) {
-        const part = await SparePart.findOne({ partId: item.partId }).session(session);
-        if (!part) {
-          await session.abortTransaction();
-          return res.status(400).json({ message: `Invalid Part ID: ${item.partId}` });
-        }
+        const part = await SparePart.findOne({ partId: item.partId });
+        if (!part) return res.status(400).json({ message: `Invalid Spare Part ID: ${item.partId}` });
         if (part.currentStock < item.quantity) {
-          await session.abortTransaction();
-          return res.status(400).json({ message: `Insufficient stock for ${part.name}` });
+          return res.status(400).json({ message: `Insufficient stock for ${part.name}. Available: ${part.currentStock}, Requested: ${item.quantity}` });
         }
-        part.currentStock -= item.quantity;
-        await part.save({ session });
         sparesDocs.push({ part: part._id, quantity: item.quantity });
       }
 
-      const log = await MaintenanceLog.create(
-        [
-          {
-            maintenanceId,
-            equipment: equipment._id,
-            maintenanceType,
-            description,
-            technicianName,
-            dateOfService: new Date(dateOfService),
-            sparesUsed: sparesDocs,
-            downtimeDurationMinutes,
-            remarks
-          }
-        ],
-        { session }
-      );
+      // Create log and update equipment/spares sequentially
+      const log = new MaintenanceLog({
+        maintenanceId,
+        equipment: equipment._id,
+        maintenanceType,
+        description,
+        technicianName,
+        dateOfService: new Date(dateOfService),
+        sparesUsed: sparesDocs,
+        downtimeDurationMinutes,
+        remarks
+      });
+      await log.save();
 
+      // Update equipment status and date
       equipment.lastMaintenanceDate = new Date(dateOfService);
-      await equipment.save({ session });
+      equipment.status = "Operational";
+      await equipment.save();
 
-      await session.commitTransaction();
-      session.endSession();
+      // Decrement spares stock
+      for (const item of sparesUsed) {
+        await SparePart.findOneAndUpdate(
+          { partId: item.partId },
+          { $inc: { currentStock: -item.quantity } }
+        );
+      }
 
-      const populated = await MaintenanceLog.findById(log[0]._id)
-        .populate("equipment")
-        .populate("sparesUsed.part");
-      res.status(201).json(populated);
+      res.status(201).json(log);
     } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
+      console.error("Maintenance submit error:", err);
       res.status(500).json({ message: "Server error", error: err.message });
     }
   }
